@@ -1,9 +1,9 @@
 
 use std::{
-    // thread::spawn,
     io::{
         prelude::*,
         stdin,
+        BufReader,
     },
     net::{
         TcpListener,
@@ -12,19 +12,34 @@ use std::{
     }
 };
 
+use crate::message::requests::Requests;
+
+mod message;
+
 fn handle_client(mut stream: TcpStream) {
-    let mut buffer = [0u8; 2048];
+    let buf_reader = BufReader::new(&mut stream);
 
-    stream.read(&mut buffer).expect("Faild to read from client");
+    let http_request: Vec<_> = buf_reader
+        .lines()
+        .map(|result| result.unwrap())
+        .take_while(|line| !line.is_empty())
+        .collect();
 
-    let request = String::from_utf8(buffer.to_vec()).expect("Fail to decode received data");
     println!("Received request from {}", stream.peer_addr().unwrap());
-    println!("Message: {}", request);
+    println!("Message: {:#?}", http_request);
+    let request = Requests::new(http_request);
+    println!("Request: {:?}", request);
 
-    let mut response = String::new();
-    println!("Enter response:");
-    stdin().read_line(&mut response).unwrap();
 
+    let response = r"HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 13
+
+Hello, World!
+        ";
+
+    println!("Response is: ");
+    println!("{}", response);
     let response = response.as_bytes();
     stream.write(response).expect("Faild to response to client");
 
@@ -32,7 +47,7 @@ fn handle_client(mut stream: TcpStream) {
 
 
 fn main(){
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
+    let addr = SocketAddr::from(([127, 0, 0, 1], 8069));
     let listener = TcpListener::bind(addr).expect("Faile to bind to address");
     println!("Server listening at address: {}", addr);
 
