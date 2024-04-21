@@ -1,5 +1,7 @@
 use super::core::HttpVersion;
 
+use crate::prelude::*;
+
 #[derive(Debug)]
 pub enum HttpMethod {
     GET,
@@ -77,10 +79,11 @@ pub struct Request {
     pub accept: Vec<String>,
     pub accept_encoding: Vec<String>,
     pub accept_language: Vec<String>,
+    pub body: String,
 }
 
 impl Request {
-    pub fn new(http_request: Vec<String>) -> Self {
+    pub fn new(http_request: Vec<String>) -> Result<Self> {
         if http_request.len() < 2 {
             panic!("Requerst is too short!");
         }
@@ -97,13 +100,14 @@ impl Request {
         } 
         let method = HttpMethod::from_string(request_line.first().unwrap()).unwrap();
         let path = request_line[1].to_string();
+        let http_version = HttpVersion::from_string(request_line.last().unwrap()).unwrap();
 
 
         let mut request = Request {
             method,
-            http_request: Vec::new(),
             path,
-            http_version: HttpVersion::from_string(request_line.last().unwrap()).unwrap(),
+            http_version,
+            http_request: Vec::new(),
             host: String::new(),
             connection: String::new(),
             user_agent: String::new(),
@@ -112,6 +116,7 @@ impl Request {
             accept: Vec::new(),
             accept_encoding: Vec::new(),
             accept_language: Vec::new(),
+            body: String::new(),
         };
 
        for request_field in http_request.iter().skip(1){
@@ -144,8 +149,8 @@ impl Request {
                 _ => (),
             }
         }
-        // request.http_request = http_request;
+        request.http_request = http_request;
 
-        request
+        Ok(request)
     }
 }

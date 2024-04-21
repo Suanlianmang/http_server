@@ -3,7 +3,7 @@ use super::request::{HttpMethod, Request};
 
 
 #[derive(Debug)]
-enum HttpStatusCode {
+pub enum HttpStatusCode {
     // Informational
     Continue,
     SwitchingProtocols,

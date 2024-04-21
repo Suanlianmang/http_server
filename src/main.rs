@@ -1,3 +1,4 @@
+#![allow(unused)] // For beginning only.
 
 use std::{
     io::{
@@ -11,11 +12,17 @@ use std::{
     }
 };
 
-use crate::http::{request::Request, utils::DateTime};
+
+use crate::http::request::Request;
+use crate::prelude::*;
+use crate::utils::datetime::DateTime;
 
 mod http;
+mod error;
+mod prelude;
+mod utils;
 
-fn handle_client(mut stream: TcpStream) {
+fn handle_client(mut stream: TcpStream) -> Result<()> {
     let buf_reader = BufReader::new(&mut stream);
 
     let http_request: Vec<_> = buf_reader
@@ -26,6 +33,7 @@ fn handle_client(mut stream: TcpStream) {
 
     println!("Received request from {}", stream.peer_addr().unwrap());
     println!("Message: {:#?}", http_request);
+
     let request = Request::new(http_request);
     println!("Request: {:?}", request);
 
@@ -51,10 +59,12 @@ Cross-Origin-Opener-Policy: same-origin
     let response = response.as_bytes();
     stream.write(response).expect("Faild to response to client");
 
+    Ok(())
+
 }
 
 
-fn main(){
+fn main() -> Result<()> {
     let addr = SocketAddr::from(([127, 0, 0, 1], 8069));
     let listener = TcpListener::bind(addr).expect("Faile to bind to address");
     println!("Server listening at address: {}", addr);
@@ -65,13 +75,14 @@ fn main(){
         match stream {
             Ok(stream) => {
                 // spawn(|| handle_client(stream));
-                handle_client(stream);
+                handle_client(stream)?;
             }
             Err(e) => {
                 eprintln!("Failed to establish connection: {}", e);
             }
         }
     }
+    Ok(())
 }
 
 
